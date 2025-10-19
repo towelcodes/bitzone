@@ -1,0 +1,27 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap");
+@import "tailwindcss";
+@import "@catppuccin/tailwindcss/mocha.css";
+
+@font-face {
+    font-family: "MS UI Gothic";
+    src: url("/font/MS-UIGothic.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Zpix";
+    src: url("/font/zpix.ttf") format("truetype");
+}
+
+@theme {
+    --color-bg: var(--color-ctp-mantle);
+    --font-mono: "DM Mono", "JetBrains Mono", monospace;
+    --font-sans: "MS UI Gothic", "Verdana", system-ui, sans-serif;
+    --font-pixel: "Zpix", "nec_apc3";
+}
+
+@layer base {
+    body {
+        @apply text-ctp-text bg-bg;
+        image-rendering: pixelated;
+    }
+}
