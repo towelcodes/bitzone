@@ -4,14 +4,19 @@ import {
   S3Client,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
-import { env } from "$env/dynamic/private";
+import {
+  S3_ENDPOINT,
+  S3_BUCKET,
+  S3_ACCESS_KEY_ID,
+  S3_SECRET_ACCESS_KEY,
+} from "$env/static/private";
 
 export const client = new S3Client({
-  endpoint: env.S3_ENDPOINT!!,
+  endpoint: S3_ENDPOINT,
   region: "auto",
   credentials: {
-    accessKeyId: env.S3_ACCESS_KEY_ID!!,
-    secretAccessKey: env.S3_SECRET_ACCESS_KEY!!,
+    accessKeyId: S3_ACCESS_KEY_ID,
+    secretAccessKey: S3_SECRET_ACCESS_KEY,
   },
 });
 
@@ -19,7 +24,7 @@ export async function put(data: Buffer, type: string, name?: string) {
   const key = name ?? (await createUniqueId());
   await client.send(
     new PutObjectCommand({
-      Bucket: env.S3_BUCKET,
+      Bucket: S3_BUCKET,
       Key: key,
       Body: data,
       ContentType: type,
@@ -31,7 +36,7 @@ export async function put(data: Buffer, type: string, name?: string) {
 export async function get(key: string) {
   return await client.send(
     new GetObjectCommand({
-      Bucket: env.S3_BUCKET,
+      Bucket: S3_BUCKET,
       Key: key,
     }),
   );
@@ -52,7 +57,7 @@ export async function createUniqueId() {
     try {
       await client.send(
         new HeadObjectCommand({
-          Bucket: env.S3_BUCKET,
+          Bucket: S3_BUCKET,
           Key: id,
         }),
       );
