@@ -24,4 +24,7 @@
         @apply text-ctp-text bg-bg;
         image-rendering: pixelated;
     }
+    a {
+        @apply underline hover:no-underline;
+    }
 }

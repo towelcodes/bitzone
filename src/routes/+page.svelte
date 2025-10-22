@@ -1,7 +1,13 @@
 <script lang="ts">
-    import { TriangleAlert, Upload } from "@lucide/svelte";
+    import { TriangleAlert, Upload, File, X } from "@lucide/svelte";
 
+    let uploadButton,
+        clearButton: HTMLButtonElement | undefined = $state();
+
+    let filename = $state("");
     let files: FileList | undefined = $state();
+    let filesInput: HTMLInputElement | undefined = $state();
+
     async function upload() {
         console.log(files);
         const fd = new FormData();
@@ -10,11 +16,45 @@
         await fetch("/api/upload", { method: "POST", body: fd });
     }
 
+    function clear() {
+        files = new DataTransfer().files;
+    }
+
     $effect(() => {
         if (files) {
             console.log(files);
+            if (files.length > 0) {
+                filename = files[0].name;
+                uploadButton!!.disabled = false;
+                clearButton!!.disabled = false;
+            } else {
+                filename = "";
+                uploadButton!!.disabled = true;
+                clearButton!!.disabled = true;
+            }
+        } else {
+            filename = "";
+            uploadButton!!.disabled = true;
+            clearButton!!.disabled = true;
         }
     });
+
+    function drop(e: DragEvent) {
+        // fixme unknown assert
+        if ([...e.dataTransfer!!.items].some((item) => item.kind === "file")) {
+            e.preventDefault();
+        }
+    }
+
+    function dragOver(e: DragEvent) {
+        const fileItems = [...e.dataTransfer!!.items].filter(
+            (item) => item.kind === "file",
+        );
+        if (fileItems.length > 0) {
+            e.preventDefault();
+            e.dataTransfer!!.dropEffect = "copy";
+        }
+    }
 </script>
 
 <div class="font-mono p-8">
@@ -53,14 +93,51 @@
         </span>
     </div>
 
-    <div>
-        <input type="file" bind:files />
-
-        <button
-            class="flex gap-2 *:my-auto text-sm bg-ctp-red text-ctp-crust font-bold px-3 py-2"
-            onclick={upload}
+    <div class="text-center *:mx-auto">
+        <label
+            for="upload"
+            class="w-64 h-16 border-2 border-dotted border-ctp-lavender my-4 flex justify-center items-center"
+            ondrop={drop}
+            ondragover={dragOver}
         >
-            <Upload /> upload a file
-        </button>
+            <div class="flex gap-2 *:my-auto">
+                <File class="ml-auto stroke-ctp-subtext0" />
+                {#if filename == ""}
+                    <p class="italic text-ctp-subtext0 text-sm mr-auto">
+                        [select a file]
+                    </p>
+                {:else}
+                    <p class="text-sm mr-auto">
+                        {filename}
+                    </p>
+                {/if}
+            </div>
+            <input
+                id="upload"
+                type="file"
+                bind:this={filesInput}
+                bind:files
+                class="hidden"
+            />
+        </label>
+
+        <div class="flex gap-2 mx-auto justify-center items-center">
+            <button
+                class="flex gap-2 *:my-auto text-sm border-1 border-solid border-ctp-red bg-ctp-red text-ctp-crust font-bold px-3 py-2 hover:bg-transparent hover:text-ctp-text transition disabled:bg-transparent disabled:border-ctp-overlay0 disabled:border-dashed disabled:text-ctp-subtext0/40"
+                onclick={upload}
+                bind:this={uploadButton}
+                disabled
+            >
+                <Upload /> upload
+            </button>
+            <button
+                class="flex gap-2 *:my-auto text-sm border-1 border-solid border-ctp-lavender bg-ctp-lavender text-ctp-crust font-bold px-3 py-2 hover:bg-transparent hover:text-ctp-text transition disabled:bg-transparent disabled:border-ctp-overlay0 disabled:border-dashed disabled:text-ctp-subtext0/40"
+                onclick={clear}
+                bind:this={clearButton}
+                disabled
+            >
+                <X />
+            </button>
+        </div>
     </div>
 </div>
