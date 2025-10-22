@@ -10,7 +10,7 @@ export const POST: RequestHandler = async ({ request }) => {
       headers: { "Content-Type": "application/json" },
     });
 
-  const key = await put(Buffer.from(await file.arrayBuffer()), file.type);
+  const key = await put(file.stream(), file.type);
 
   return new Response(
     JSON.stringify({

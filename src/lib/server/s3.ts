@@ -20,7 +20,7 @@ export const client = new S3Client({
   },
 });
 
-export async function put(data: Buffer, type: string, name?: string) {
+export async function put(data: Buffer | ReadableStream, type: string, name?: string) {
   const key = name ?? (await createUniqueId());
   await client.send(
     new PutObjectCommand({
