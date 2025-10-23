@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { TriangleAlert, Upload, File, X } from "@lucide/svelte";
+    import {
+        TriangleAlert,
+        Upload,
+        File,
+        X,
+        LoaderCircle,
+    } from "@lucide/svelte";
 
     let uploadButton,
         clearButton: HTMLButtonElement | undefined = $state();
@@ -19,16 +25,26 @@
         const req = new XMLHttpRequest();
         req.open("POST", "/api/upload");
 
-        req.upload.addEventListener("progress", (e) => {
-            if (e.lengthComputable) {
-                console.log("upload: ", e.loaded, e.total, e.loaded / e.total);
-            }
+        await new Promise((resolve) => {
+            req.upload.addEventListener("progress", (e) => {
+                if (e.lengthComputable) {
+                    progress = e.loaded / e.total;
+                    console.log(
+                        "upload: ",
+                        e.loaded,
+                        e.total,
+                        e.loaded / e.total,
+                    );
+                }
+            });
+            req.upload.addEventListener("loadend", () => {
+                resolve(null);
+            });
+            req.send(fd);
         });
-        req.send(fd);
 
-        console.log("completed: ", req.status, req.readyState);
-
-        // await fetch("/api/upload", { method: "POST", body: fd });
+        console.log("completed: ", req.readyState, req.status);
+        progress = undefined;
     }
 
     function clear() {
@@ -116,12 +132,20 @@
             ondragover={dragOver}
         >
             <div class="flex gap-2 *:my-auto">
-                <File class="ml-auto stroke-ctp-subtext0" />
                 {#if filename == ""}
+                    <File class="ml-auto stroke-ctp-subtext0" />
                     <p class="italic text-ctp-subtext0 text-sm mr-auto">
                         [select a file]
                     </p>
+                {:else if progress}
+                    <LoaderCircle
+                        class="ml-auto stroke-ctp-text animate-spin"
+                    />
+                    <p class="text-sm mr-auto">
+                        {(progress * 100).toPrecision(3)}%
+                    </p>
                 {:else}
+                    <X class="ml-auto stroke-ctp-text" />
                     <p class="text-sm mr-auto">
                         {filename}
                     </p>

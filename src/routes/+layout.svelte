@@ -12,7 +12,5 @@
 {@render children?.()}
 
 <footer class="text-ctp-subtext0 text-xs font-pixel text-center">
-    teatowel powered <br />
-    icons from lucide <br />
-    see what powers bitzone
+    bitzone is open source
 </footer>
