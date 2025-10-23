@@ -6,14 +6,29 @@
 
     let filename = $state("");
     let files: FileList | undefined = $state();
-    let filesInput: HTMLInputElement | undefined = $state();
+    let progress: number | undefined = $state();
 
     async function upload() {
+        if (!files) return;
         console.log(files);
+
         const fd = new FormData();
-        if (files) fd.append("file", files[0]);
+        fd.append("file", files[0]);
         console.log(fd);
-        await fetch("/api/upload", { method: "POST", body: fd });
+
+        const req = new XMLHttpRequest();
+        req.open("POST", "/api/upload");
+
+        req.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+                console.log("upload: ", e.loaded, e.total, e.loaded / e.total);
+            }
+        });
+        req.send(fd);
+
+        console.log("completed: ", req.status, req.readyState);
+
+        // await fetch("/api/upload", { method: "POST", body: fd });
     }
 
     function clear() {
@@ -112,18 +127,12 @@
                     </p>
                 {/if}
             </div>
-            <input
-                id="upload"
-                type="file"
-                bind:this={filesInput}
-                bind:files
-                class="hidden"
-            />
+            <input id="upload" type="file" bind:files class="hidden" />
         </label>
 
         <div class="flex gap-2 mx-auto justify-center items-center">
             <button
-                class="flex gap-2 *:my-auto text-sm border-1 border-solid border-ctp-red bg-ctp-red text-ctp-crust font-bold px-3 py-2 hover:bg-transparent hover:text-ctp-text transition disabled:bg-transparent disabled:border-ctp-overlay0 disabled:border-dashed disabled:text-ctp-subtext0/40"
+                class="button border-ctp-red bg-ctp-red"
                 onclick={upload}
                 bind:this={uploadButton}
                 disabled
@@ -131,7 +140,7 @@
                 <Upload /> upload
             </button>
             <button
-                class="flex gap-2 *:my-auto text-sm border-1 border-solid border-ctp-lavender bg-ctp-lavender text-ctp-crust font-bold px-3 py-2 hover:bg-transparent hover:text-ctp-text transition disabled:bg-transparent disabled:border-ctp-overlay0 disabled:border-dashed disabled:text-ctp-subtext0/40"
+                class="button border-ctp-lavender bg-ctp-lavender"
                 onclick={clear}
                 bind:this={clearButton}
                 disabled

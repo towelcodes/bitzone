@@ -17,6 +17,12 @@
     --font-mono: "DM Mono", "JetBrains Mono", monospace;
     --font-sans: "MS UI Gothic", "Verdana", system-ui, sans-serif;
     --font-pixel: "Zpix", "nec_apc3";
+
+    @keyframes bg {
+        0%,
+        100% {
+        }
+    }
 }
 
 @layer base {
@@ -26,5 +32,34 @@
     }
     a {
         @apply underline hover:no-underline;
+    }
+}
+
+@layer components {
+    .button {
+        @apply flex
+        gap-2
+        *:my-auto
+        text-sm
+        border-1
+        border-solid
+        text-ctp-crust
+        font-bold
+        px-3
+        py-2
+        hover:bg-transparent
+        hover:text-ctp-text
+        transition
+        disabled:bg-transparent!
+        disabled:border-ctp-overlay0!
+        disabled:border-dashed!
+        disabled:text-ctp-subtext0/40
+        active:scale-[80%];
+    }
+}
+
+@layer utilities {
+    .bg-png {
+        background: linear-gradient(gray, lightgray);
     }
 }
