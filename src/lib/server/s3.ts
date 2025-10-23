@@ -4,6 +4,7 @@ import {
   S3Client,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import {
   S3_ENDPOINT,
   S3_BUCKET,
@@ -20,16 +21,22 @@ export const client = new S3Client({
   },
 });
 
-export async function put(data: Buffer | ReadableStream, type: string, name?: string) {
+export async function put(
+  data: Buffer | ReadableStream,
+  type: string,
+  name?: string,
+) {
   const key = name ?? (await createUniqueId());
-  await client.send(
-    new PutObjectCommand({
+  const upload = new Upload({
+    client,
+    params: {
       Bucket: S3_BUCKET,
       Key: key,
       Body: data,
       ContentType: type,
-    }),
-  );
+    },
+  });
+  await upload.done();
   return key;
 }
 
