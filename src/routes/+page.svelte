@@ -21,9 +21,10 @@
     import { onMount } from "svelte";
     import { fade, slide } from "svelte/transition";
     import type { PageProps } from "./$types";
-    import TextInput from "$lib/TextInput.svelte";
-    import MultiChoice from "$lib/MultiChoice.svelte";
+    import TextInput from "$lib/form/TextInput.svelte";
+    import MultiChoice from "$lib/form/MultiChoice.svelte";
     import Button from "$lib/Button.svelte";
+    import Checkbox from "$lib/form/Checkbox.svelte";
 
     let { data }: PageProps = $props();
 
@@ -37,10 +38,11 @@
 
     let recentUploads: string[] = $state([]);
 
-    // metadata
+    // options
     let title = $state("");
     let description = $state("");
     let expiry = $state("-1");
+    let preserveFilename = $state(false);
 
     let canUpload = $state(false);
     let canClear = $state(false);
@@ -276,23 +278,21 @@
         <div>
             <h2 class="text-2xl font-display">options</h2>
 
-            <div class="flex flex-col gap-1">
-                <div>
-                    expiry
-                    <MultiChoice options={[{
-                      label: "never", value: "-1"
-                    }, {
-                        label: "30d", value: "2592000",
-                    }, {
-                        label: "1d", value: "86400",
-                    }, {
-                        label: "12h", value: "43200",
-                    }, {
-                        label: "1h", value: "3600",
-                    }]} bind:value={expiry} />
-                </div>
+            <div class="flex flex-col gap-2">
                 <TextInput bind:value={title} placeholder="title" />
                 <TextInput bind:value={description} placeholder="description" multiline />
+                <Checkbox bind:checked={preserveFilename} label="preserve filename?"/>
+                <MultiChoice options={[{
+                    label: "∞", value: "-1"
+                }, {
+                    label: "30d", value: "2592000",
+                }, {
+                    label: "1d", value: "86400",
+                }, {
+                    label: "12h", value: "43200",
+                }, {
+                    label: "1h", value: "3600",
+                }]} bind:value={expiry} />
             </div>
         </div>
     </div>
