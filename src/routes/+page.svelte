@@ -206,7 +206,11 @@
                 <div class="flex flex-col">
                     <div class="grow flex items-center justify-center">
                         <div class="rounded-full bg-ctp-mantle px-2 py-2">
-                            {#if filename}
+                            {#if progress}
+                                <LoaderCircle
+                                    class="stroke-ctp-mauve animate-spin"
+                                />
+                            {:else if filename}
                                 <File class="stroke-ctp-mauve" />
                             {:else}
                                 <Upload class="stroke-ctp-mauve" />
@@ -217,7 +221,9 @@
 
                 <!-- text -->
                 <div class="md:w-1/2 text-center break-words">
-                    {#if filename}
+                    {#if progress}
+                        uploading...
+                    {:else if filename}
                         {filename}
                     {:else}
                         Drag and drop, or select a file to begin uploading.
@@ -226,7 +232,14 @@
 
                 <!-- size -->
                 <div>
-                    {#if filename}
+                    {#if progress}
+                        <div class="text-xs text-ctp-subtext0">
+                            {((progress.loaded / progress.total) * 100).toPrecision(
+                                3,
+                            )}% ({prettyNumber(progress.loaded)}B /
+                            {prettyNumber(progress.total)}B)
+                        </div>
+                    {:else if filename}
                         <div class="text-xs text-ctp-subtext0">
                             {prettyNumber(files?.item(0)?.size ?? 0)}B
                         </div>
