@@ -7,7 +7,7 @@
 <div class="flex items-center justify-center w-full h-full">
     <div class="bg-ctp-crust rounded px-8 py-4 relative min-w-sm">
         <h1 class="font-display text-ctp-maroon text-7xl absolute -top-10">
-            not found
+            {error?.message.toLowerCase()}
         </h1>
         <div class="flex flex-col">
             <div class="grow flex items-center justify-center py-12">

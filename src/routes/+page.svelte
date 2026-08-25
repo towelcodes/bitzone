@@ -1,7 +1,5 @@
 <script lang="ts">
     import {
-        PUBLIC_INSTANCE_NAME,
-        PUBLIC_INSTANCE_TAGLINE,
         PUBLIC_INSTANCE_RULES,
         PUBLIC_REPO_URL,
         PUBLIC_BASE_URL,

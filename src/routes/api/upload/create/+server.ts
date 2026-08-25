@@ -5,6 +5,8 @@ import { env } from "$env/dynamic/public";
 import { env as privateEnv } from "$env/dynamic/private";
 import { client, createUniqueId } from "$lib/server/s3";
 import { getFilesRepo } from "$lib/server/get-files-repo";
+import { verifySession } from "$lib/server/session";
+import { DISCORD_SESSION_SECRET } from "$env/static/private";
 import { prettyNumber } from "$lib/util";
 import { error } from "@sveltejs/kit";
 
@@ -21,6 +23,7 @@ export const POST: RequestHandler = async ({
   request,
   getClientAddress,
   platform,
+  cookies,
 }) => {
   let uploadRequest: UploadRequest;
   try {
@@ -50,6 +53,10 @@ export const POST: RequestHandler = async ({
 
   // persist metadata so files can be queried and expired later
   const repo = getFilesRepo(platform);
+  const user = await verifySession(
+    cookies.get("session"),
+    DISCORD_SESSION_SECRET,
+  );
   const expiresAt =
     uploadRequest.expiry != undefined && uploadRequest.expiry > 0
       ? Date.now() + uploadRequest.expiry * 1000
@@ -59,7 +66,7 @@ export const POST: RequestHandler = async ({
     filename: uploadRequest.filename,
     size,
     contentType: "application/octet-stream",
-    uploaderId: "anonymous",
+    uploaderId: user?.id ?? "anonymous",
     title: uploadRequest.title,
     description: uploadRequest.description,
     expiresAt,

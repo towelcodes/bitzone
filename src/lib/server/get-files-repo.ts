@@ -11,5 +11,5 @@ export function getFilesRepo(platform: App.Platform | undefined): FilesRepo {
   if (!platform) {
     throw new Error("FilesRepo requires a platform (Cloudflare) binding");
   }
-  return new D1FilesRepo(platform.env.DB);
+  return new D1FilesRepo(platform.env.db);
 }
