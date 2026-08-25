@@ -16,8 +16,6 @@
     />
 </svelte:head>
 
-{@render children?.()}
-
-<footer class="text-ctp-subtext0 text-xs font-pixel text-center mt-4">
-    <a href={PUBLIC_REPO_URL}>source code</a>
-</footer>
+<div class="mt-4 md:mx-0 mx-2">
+    {@render children?.()}
+</div>
