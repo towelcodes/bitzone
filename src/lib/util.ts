@@ -50,11 +50,19 @@ export async function createUpload(
   size: number,
   filename: string,
   key?: string,
+  options?: {
+    title?: string;
+    description?: string;
+    expiry?: number; // seconds, or -1 for never
+  },
 ) {
   const body = {
     size,
     filename,
     key,
+    title: options?.title,
+    description: options?.description,
+    expiry: options?.expiry,
   };
   const res = await fetch("/api/upload/create", {
     method: "POST",
