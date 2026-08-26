@@ -202,7 +202,7 @@
         <div class="flex flex-col items-center">
             <label
                 for="upload"
-                class="font-sans p-4 rounded border-2 border-dashed border-ctp-subtext0 bg-ctp-crust my-4 flex justify-center items-center flex-col gap-3 w-full max-w-md h-56"
+                class="font-sans p-4 rounded border-2 border-dashed border-ctp-subtext0 bg-ctp-crust my-4 flex justify-center items-center flex-col gap-3 w-full md:w-80 h-56"
             >
                 <!-- icon -->
                 <div class="flex flex-col">

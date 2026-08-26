@@ -5,6 +5,7 @@
     interface Props {
         contentType: string;
         file: string;
+        raw?: string;
         download_button: Snippet;
     }
 
