@@ -24,21 +24,29 @@
             </div>
         </div>
 
-        <div class="bg-ctp-surface0 rounded px-2 flex gap-2 items-center">
+        <div class="px-2 flex gap-2 items-center">
             {#if user}
-                <img
-                    src={user.avatarUrl}
-                    alt=""
-                    class="w-6 h-6 rounded-full"
-                />
-                <span class="text-ctp-subtext0 text-sm">
+                <div class="bg-ctp-surface0 rounded px-2 py-1 flex gap-2 items-center">
+                    <img
+                        src={user.avatarUrl}
+                        alt=""
+                        class="w-6 h-6 rounded-full"
+                    />
                     {user.displayName}
-                </span>
+                </div>
+
+                <div class="bg-ctp-surface0 rounded px-2 py-1 flex gap-2 items-center text-ctp-subtext0">
+                    <a href="/auth/logout" class="no-underline hover:text-ctp-text">
+                        Log out
+                    </a>
+                </div>
             {:else}
-                <LogIn/>
-                <a href="/auth" class="no-underline">
-                    Log in with Discord
-                </a>
+                <div class="bg-ctp-surface0 rounded px-2 py-1 flex gap-2 items-center">
+                    <LogIn/>
+                    <a href="/auth" class="no-underline">
+                        Login with Discord
+                    </a>
+                </div>
             {/if}
         </div>
     </div>

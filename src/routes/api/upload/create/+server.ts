@@ -134,7 +134,7 @@ export const POST: RequestHandler = async ({
     {
       status: 200,
       headers: {
-        ContentType: "application/json",
+        "Content-Type": "application/json",
       },
     },
   );

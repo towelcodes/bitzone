@@ -68,7 +68,7 @@ export async function createUpload(
     method: "POST",
     body: JSON.stringify(body),
     headers: {
-      "Content-Type": "applicaiton/json",
+      "Content-Type": "application/json",
     },
   });
 
