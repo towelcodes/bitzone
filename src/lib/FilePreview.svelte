@@ -12,8 +12,8 @@
     let { contentType, file, raw, download_button }: Props = $props();
 </script>
 
-<div class="bg-ctp-crust rounded px-4 py-4">
-    <div class="max-w-2xl mx-auto">
+<div class="bg-ctp-crust min-h-64 max-w-2xl rounded px-4 py-4">
+    <div class="m-auto">
         {#if contentType.startsWith("image")}
             <img src={raw} alt="" class="max-h-[32em] mx-auto" />
         {:else if contentType.startsWith("video")}

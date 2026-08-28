@@ -3,10 +3,14 @@
     import { Download, Flag, Link, Trash, Pencil } from "@lucide/svelte";
     import type { PageProps } from "./$types";
     import Button from "$lib/Button.svelte";
+    import Progress from "$lib/Progress.svelte";
     import { prettyNumber } from "$lib/util";
     import FilePreview from "$lib/FilePreview.svelte";
-    import { PUBLIC_BASE_URL } from "$env/static/public";
+    import Banner from "$lib/Banner.svelte";
+
     let { data }: PageProps = $props();
+
+    let downloadProgress: number | undefined = $state();
 
     const properties = [
         ["filename", data.file],
@@ -16,8 +20,27 @@
     ];
 
     async function download() {
+        if (downloadProgress != undefined) return; // already downloading
+
         const response = await fetch(data.raw + "?d");
-        const blob = await response.blob();
+        if (!response.ok || !response.body) {
+            throw new Error(`download failed: ${response.status}`);
+        }
+        const total = parseInt(response.headers.get("Content-Length") ?? "0");
+
+        const reader = response.body.getReader();
+        const chunks: Uint8Array[] = [];
+        let loaded = 0;
+
+        for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            loaded += value.length;
+            downloadProgress = total > 0 ? loaded / total : undefined;
+        }
+
+        const blob = new Blob(chunks as BlobPart[], { type: response.headers.get("Content-Type") ?? "application/octet-stream" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
@@ -26,13 +49,10 @@
         a.click();
 
         URL.revokeObjectURL(url);
+        downloadProgress = undefined;
     }
 
     function report() {}
-
-    function edit() {}
-
-    function del() {}
 
     function copyUrl() {
         const copyText: HTMLDivElement =
@@ -78,18 +98,32 @@
     <Button
         classes="bg-ctp-green w-min"
         icon={download_icon}
-        callback={download}>Download</Button
+        callback={download}
+        disabled={downloadProgress != undefined}
     >
+        {#if downloadProgress != undefined}
+            <div class="flex flex-col gap-1 items-center">
+                <span class="text-xs">
+                    {Math.round(downloadProgress * 100)}%
+                </span>
+                <Progress progress={downloadProgress} classList="w-24" />
+            </div>
+        {:else}
+            Download
+        {/if}
+    </Button>
     <!-- </a> -->
 {/snippet}
 
+<Banner user={data.user} />
+
 <div
-    class="w-full md:h-full flex items-center justify-around flex-col md:flex-row gap-6 px-8"
+    class="w-full md:px-64 mt-8 flex items-center justify-around flex-col md:flex-row gap-6 px-8"
 >
     <div class="flex md:flex-1 flex-col gap-2">
         <!-- title and buttons -->
         <div class="flex gap-2">
-            <div class="rounded bg-ctp-crust w-min px-4 py-2 grow my-auto">
+            <div class="rounded w-min px-4 py-2 grow my-auto">
                 <h1 class="text-4xl font-display text-ctp-blue">
                     {data.file}
                 </h1>
@@ -99,39 +133,31 @@
             </div>
             <div class="flex flex-col gap-1 justify-around">
                 <!-- buttons -->
-                <div class="flex gap-1 mx-auto">
+                <div class="flex gap-1 ml-auto">
                     {@render download_button()}
 
                     {#snippet report_icon()}
                         <Flag />
                     {/snippet}
                     <Button classes="bg-ctp-surface1" icon={report_icon} />
-
-                    {#snippet edit_icon()}
-                        <Pencil />
-                    {/snippet}
-                    <Button classes="bg-ctp-surface1" icon={edit_icon} />
-
-                    {#snippet delete_icon()}
-                        <Trash />
-                    {/snippet}
-                    <Button classes="bg-ctp-surface1" icon={delete_icon} />
                 </div>
 
                 <!-- url -->
                 <div
-                    class="relative bg-ctp-crust text-ctp-subtext0 font-mono text-sm w-full rounded-sm py-2 px-2 text-nowrap overflow-x-auto"
+                    class="flex bg-ctp-crust text-ctp-subtext0 font-mono text-sm w-full rounded-sm py-2 px-2 text-nowrap overflow-x-auto"
                     id="downloadUrl"
                 >
+                    <div class="pr-4">
+                        {env.PUBLIC_BASE_URL}/u/{data.file}
+                    </div>
                     {#snippet link_icon()}
                         <Link class="h-5 w-4" />
                     {/snippet}
                     <Button
-                        classes="absolute text-ctp-text! bg-ctp-surface0 right-0 top-0"
+                        classes="text-ctp-text! bg-ctp-surface0 right-0 top-0 -m-2"
                         icon={link_icon}
                         callback={copyUrl}
                     />
-                    {env.PUBLIC_BASE_URL}/u/{data.file}
                 </div>
             </div>
         </div>
