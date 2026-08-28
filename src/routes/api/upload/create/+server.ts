@@ -17,6 +17,7 @@ interface UploadRequest {
   title?: string;
   description?: string;
   expiry?: number; // seconds, or -1 for never
+  preserveFilename?: boolean;
 }
 
 export const POST: RequestHandler = async ({
@@ -63,7 +64,10 @@ export const POST: RequestHandler = async ({
       : null;
   await repo.create({
     key,
-    filename: uploadRequest.filename,
+    // keep the original filename only when requested; otherwise use the key
+    filename: uploadRequest.preserveFilename
+      ? uploadRequest.filename
+      : key,
     size,
     contentType: "application/octet-stream",
     uploaderId: user?.id ?? "anonymous",

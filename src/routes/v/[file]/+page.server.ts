@@ -35,6 +35,7 @@ export const load: PageServerLoad = async ({
 
   return {
     file: params.file,
+    filename: meta?.filename ?? params.file,
     lastModified: object.headers.get("Last-Modified"),
     size: parseInt(object.headers.get("Content-Length")!!),
     uploader: meta?.uploaderId ?? "anonymous",

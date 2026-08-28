@@ -54,6 +54,7 @@ export async function createUpload(
     title?: string;
     description?: string;
     expiry?: number; // seconds, or -1 for never
+    preserveFilename?: boolean;
   },
 ) {
   const body = {
@@ -63,6 +64,7 @@ export async function createUpload(
     title: options?.title,
     description: options?.description,
     expiry: options?.expiry,
+    preserveFilename: options?.preserveFilename,
   };
   const res = await fetch("/api/upload/create", {
     method: "POST",

@@ -13,13 +13,13 @@
     let downloadProgress: number | undefined = $state();
 
     const properties = [
-        ["filename", data.file],
+        ["filename", data.filename],
         ["size", `${prettyNumber(data.size)}B`],
         ["date", data.lastModified],
         ["type", data.contentType],
     ];
 
-    const title = data.title ?? data.file;
+    const title = data.title ?? data.filename;
 
     async function download() {
         if (downloadProgress != undefined) return; // already downloading
@@ -47,7 +47,7 @@
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = data.file;
+        a.download = data.filename;
         a.click();
 
         URL.revokeObjectURL(url);
@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-    <meta property="og:title" content={data.title ?? data.file} />
+    <meta property="og:title" content={data.title ?? data.filename} />
     <meta property="og:type" content="video.other" />
     <meta property="og:url" content={`${env.PUBLIC_BASE_URL}/u/${data.file}`} />
     {#if data.contentType.startsWith("image")}
@@ -156,7 +156,7 @@
                         <Link class="h-5 w-4" />
                     {/snippet}
                     <Button
-                        classes="text-ctp-text! bg-ctp-surface0 right-0 top-0 -m-2"
+                        classes="text-ctp-text! border-ctp-surface0 bg-ctp-surface0 right-0 top-0 -m-2"
                         icon={link_icon}
                         callback={copyUrl}
                     />

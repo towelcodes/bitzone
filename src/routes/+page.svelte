@@ -16,7 +16,7 @@
     import Progress from "$lib/Progress.svelte";
     import Container from "$lib/Container.svelte";
     import Banner from "$lib/Banner.svelte";
-    import { onMount } from "svelte";
+    import RecentUploads from "$lib/RecentUploads.svelte";
     import { fade, slide } from "svelte/transition";
     import type { PageProps } from "./$types";
     import TextInput from "$lib/form/TextInput.svelte";
@@ -45,14 +45,6 @@
     let canUpload = $state(false);
     let canClear = $state(false);
 
-    onMount(() => {
-        const localStorage = window.localStorage;
-        localStorage.getItem("recentUploads") &&
-            (recentUploads = JSON.parse(
-                localStorage.getItem("recentUploads")!!,
-            ));
-    });
-
     async function upload() {
         if (!files) return;
         if (files.item(0) == null) return;
@@ -64,6 +56,7 @@
                 title: title || undefined,
                 description: description || undefined,
                 expiry: parseInt(expiry),
+                preserveFilename,
             });
             const req = new XMLHttpRequest();
             req.open("PUT", signed);
@@ -313,25 +306,7 @@
     </div>
 
     <!-- recent uploads -->
-    {#if recentUploads.length > 0}
-        <div transition:fade={{ duration: 200 }}>
-            <h2 class="text-ctp-subtext0 italic text-sm mb-4 mt-8">
-                recent uploads
-            </h2>
-            <div class="flex gap-2 flex-wrap">
-                {#each recentUploads as upload}
-                    <a
-                        href={`/v/${upload}`}
-                        class="flex items-center gap-2 rounded border-2 border-ctp-mantle px-3 py-1 text-sm"
-                        transition:slide={{ duration: 200 }}
-                    >
-                        <File class="stroke-ctp-subtext0" />
-                        {upload}
-                    </a>
-                {/each}
-            </div>
-        </div>
-    {/if}
+    <RecentUploads bind:uploads={recentUploads} />
 </div>
 
 <svelte:window ondragover={dragOver} ondrop={drop} />
