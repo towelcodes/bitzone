@@ -19,6 +19,8 @@
         ["type", data.contentType],
     ];
 
+    const title = data.title ?? data.file;
+
     async function download() {
         if (downloadProgress != undefined) return; // already downloading
 
@@ -67,7 +69,7 @@
 </script>
 
 <svelte:head>
-    <meta property="og:title" content={data.file} />
+    <meta property="og:title" content={data.title ?? data.file} />
     <meta property="og:type" content="video.other" />
     <meta property="og:url" content={`${env.PUBLIC_BASE_URL}/u/${data.file}`} />
     {#if data.contentType.startsWith("image")}
@@ -125,7 +127,7 @@
         <div class="flex gap-2">
             <div class="rounded w-min px-4 py-2 grow my-auto">
                 <h1 class="text-4xl font-display text-ctp-blue">
-                    {data.file}
+                    {title}
                 </h1>
                 <div class="text-sm text-ctp-subtext0 text-nowrap">
                     by {data.uploader}
@@ -200,9 +202,15 @@
             <h2 class="font-display text-4xl absolute -top-6 bg-bg px-1">
                 about
             </h2>
-            <i class="text-ctp-subtext0"
-                >The uploader did not provide any additional information.</i
-            >
+            {#if data.description}
+                <p class="text-ctp-subtext0 whitespace-pre-wrap">
+                    {data.description}
+                </p>
+            {:else}
+                <i class="text-ctp-subtext0"
+                    >The uploader did not provide any additional information.</i
+                >
+            {/if}
         </div>
     </div>
 </div>

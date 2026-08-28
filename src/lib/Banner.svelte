@@ -17,12 +17,12 @@
 
 <nav>
     <div class="flex flex-col gap-2 w-min md:gap-0 md:flex-row justify-around hover:cursor-default md:w-3/4 mx-auto">
-        <div class="flex gap-2 items-center px-2 rounded bg-ctp-surface0">
+        <a class="flex gap-2 items-center px-2 rounded bg-ctp-surface0 clicky no-underline" href="/">
             <Folder class="stroke-ctp-mauve" />
             <div class="font-sans text-ctp-mauve text-2xl">
                 files<span class="text-ctp-subtext0 text-lg">.towel.codes</span>
             </div>
-        </div>
+        </a>
 
         <div class="px-2 flex gap-2 items-center">
             {#if user}
@@ -35,13 +35,13 @@
                     {user.displayName}
                 </div>
 
-                <div class="bg-ctp-surface0 rounded px-2 py-1 flex gap-2 items-center text-ctp-subtext0">
+                <div class="bg-ctp-surface0 rounded px-2 py-1 flex gap-2 items-center text-ctp-subtext0 clicky">
                     <a href="/auth/logout" class="no-underline hover:text-ctp-text">
                         Log out
                     </a>
                 </div>
             {:else}
-                <div class="bg-ctp-surface0 rounded px-2 py-1 flex gap-2 items-center">
+                <div class="bg-ctp-surface0 rounded px-2 py-1 flex gap-2 items-center clicky">
                     <LogIn/>
                     <a href="/auth" class="no-underline">
                         Login with Discord

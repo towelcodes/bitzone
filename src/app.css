@@ -72,4 +72,9 @@
     .bg-png {
         background: linear-gradient(gray, lightgray);
     }
+
+    /* for buttons / clickable elements */
+    .clicky {
+        @apply transition hover:cursor-pointer hover:transform-[scale(1.05)] active:transform-[scale(0.95)];
+    }
 }

@@ -10,7 +10,7 @@
 </script>
 
 <button
-    class="flex gap-2 transition hover:cursor-pointer hover:transform-[scale(1.05)] active:transform-[scale(0.95)] text-ctp-crust rounded px-2 py-1 border-2 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none {classes}"
+    class="flex gap-2 clicky text-ctp-crust rounded px-2 py-1 border-2 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none {classes}"
     onclick={() => callback?.()}
     {disabled}
 >
