@@ -4,37 +4,27 @@
     import { LoaderCircle, Check, X } from "@lucide/svelte";
     import { env } from "$env/dynamic/public";
 
-    /* token: bindable, holds the latest solved cap token ("" until solved)
-       solve: bindable, a function the parent can call to get a fresh token */
-    let { token = $bindable(""), solve = $bindable() } = $props();
+    /* token: bindable, holds the solved cap token ("" until solved) */
+    let { token = $bindable("") } = $props();
 
     type Status = "idle" | "verifying" | "success" | "error";
     let status: Status = $state("idle");
 
     const endpoint = env.PUBLIC_CAP_ENDPOINT;
 
-    async function doSolve(): Promise<string> {
-        if (!endpoint) return "";
+    onMount(async () => {
+        if (!endpoint) return;
+
         const cap = new Cap({ apiEndpoint: endpoint });
         status = "verifying";
         try {
             const { token: t } = await cap.solve();
             token = t;
             status = "success";
-            return t;
         } catch (e) {
             console.error("cap solve failed", e);
             status = "error";
-            throw e;
         }
-    }
-
-    // expose the solve function to the parent
-    solve = doSolve;
-
-    // solve once on mount so the token is usually ready before upload
-    onMount(() => {
-        if (endpoint) doSolve();
     });
 </script>
 
