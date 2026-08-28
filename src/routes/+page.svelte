@@ -1,13 +1,10 @@
 <script lang="ts">
     import {
-        PUBLIC_INSTANCE_NAME,
-        PUBLIC_INSTANCE_TAGLINE,
         PUBLIC_INSTANCE_RULES,
         PUBLIC_REPO_URL,
         PUBLIC_BASE_URL,
     } from "$env/static/public";
     import { env } from "$env/dynamic/public";
-    import { goto } from "$app/navigation";
     import {
         TriangleAlert,
         Upload,
@@ -18,14 +15,21 @@
     import { createUpload, prettyNumber } from "$lib/util";
     import Progress from "$lib/Progress.svelte";
     import Container from "$lib/Container.svelte";
-    import Notification from "$lib/Notification.svelte";
-    import { onMount } from "svelte";
+    import Banner from "$lib/Banner.svelte";
+    import RecentUploads from "$lib/RecentUploads.svelte";
     import { fade, slide } from "svelte/transition";
+    import type { PageProps } from "./$types";
+    import TextInput from "$lib/form/TextInput.svelte";
+    import MultiChoice from "$lib/form/MultiChoice.svelte";
+    import Button from "$lib/Button.svelte";
+    import Checkbox from "$lib/form/Checkbox.svelte";
+    import CapWidget from "$lib/form/CapWidget.svelte";
+
+    let { data }: PageProps = $props();
 
     const rules = PUBLIC_INSTANCE_RULES.split("\\n");
-
-    let uploadButton,
-        clearButton: HTMLButtonElement | undefined = $state();
+    const captchaEnabled =
+        env.PUBLIC_CAP_ENDPOINT !== undefined && env.PUBLIC_CAP_ENDPOINT !== "";
 
     let filename = $state("");
     let files: FileList | undefined = $state();
@@ -35,13 +39,16 @@
 
     let recentUploads: string[] = $state([]);
 
-    onMount(() => {
-        const localStorage = window.localStorage;
-        localStorage.getItem("recentUploads") &&
-            (recentUploads = JSON.parse(
-                localStorage.getItem("recentUploads")!!,
-            ));
-    });
+    // options
+    let title = $state("");
+    let description = $state("");
+    let expiry = $state("-1");
+    let preserveFilename = $state(false);
+    let capToken = $state("");
+    let solveCap: (() => Promise<string>) | undefined = $state();
+
+    let canUpload = $state(false);
+    let canClear = $state(false);
 
     async function upload() {
         if (!files) return;
@@ -50,7 +57,18 @@
 
         // create the upload
         try {
-            const { key, signed } = await createUpload(file.size, file.name);
+            // get a fresh captcha token (single-use) right before uploading
+            let token = capToken;
+            if (captchaEnabled && solveCap) {
+                token = await solveCap();
+            }
+            const { key, signed } = await createUpload(file.size, file.name, undefined, {
+                title: title || undefined,
+                description: description || undefined,
+                expiry: parseInt(expiry),
+                preserveFilename,
+                capToken: token || undefined,
+            });
             const req = new XMLHttpRequest();
             req.open("PUT", signed);
             req.setRequestHeader("Content-Type", file.type);
@@ -82,7 +100,7 @@
             console.error(e);
             error = {
                 title: "upload failed",
-                description: `${e.message} (check console)`,
+                description: `${e.message}`,
             };
             return;
         }
@@ -92,6 +110,7 @@
 
     function clear() {
         files = new DataTransfer().files;
+        error = undefined;
     }
 
     $effect(() => {
@@ -102,23 +121,23 @@
             filename = file.name;
 
             if (maxSize != undefined && file.size > parseInt(maxSize)) {
-                uploadButton!!.disabled = true;
-                clearButton!!.disabled = false;
+                canUpload = false;
+                canClear = true;
                 error = {
                     title: "cannot upload this file",
-                    description: `size is too big (max: ${maxSize} bytes)`,
+                    description: `size is too big (${prettyNumber(file.size)}B > ${prettyNumber(parseInt(maxSize))}B)`,
                 };
             } else {
-                uploadButton!!.disabled = false;
-                clearButton!!.disabled = false;
+                canUpload = !captchaEnabled || capToken !== "";
+                canClear = true;
                 if (error?.title === "cannot upload this file") {
                     error = undefined;
                 }
             }
         } else {
             filename = "";
-            uploadButton!!.disabled = true;
-            clearButton!!.disabled = true;
+            canUpload = false;
+            canClear = false;
         }
     });
 
@@ -141,27 +160,10 @@
     }
 </script>
 
-{#if error}
-    <Notification
-        title={error.title}
-        description={error.description}
-        callback={() => (error = undefined)}
-    />
-{/if}
+<Banner user={data.user} />
 
-<div class="font-mono p-8 container lg:max-w-2xl! mx-auto">
-    <nav class="flex *:my-auto gap-4 m-4 mb-8">
-        <h1
-            class="bg-ctp-red text-ctp-crust italic font-bold rounded px-2 py-0.5 w-min text-lg"
-        >
-            {PUBLIC_INSTANCE_NAME ?? "bitzone"}
-        </h1>
-
-        <span class="text-ctp-subtext0 italic">
-            {PUBLIC_INSTANCE_TAGLINE}
-        </span>
-    </nav>
-
+<div class="mt-8 container lg:max-w-2xl! mx-auto">
+    <!-- rules -->
     {#if rules.length > 0}
         <div class="my-4">
             {#snippet warning_icon()}
@@ -187,91 +189,138 @@
         </div>
     {/if}
 
-    <div class="text-center *:mx-auto">
-        <label
-            for="upload"
-            class="w-64 h-16 px-4 border-2 border-dashed border-ctp-lavender my-4 flex justify-center items-center flex-col gap-3"
-        >
-            <div class="flex gap-2 *:my-auto">
-                {#if filename == ""}
-                    <Upload class="ml-auto stroke-ctp-subtext0" />
-                    <p class="italic text-ctp-subtext0 text-sm mr-auto">
-                        [select a file]
-                    </p>
-                {:else if progress}
-                    <LoaderCircle
-                        class="ml-auto stroke-ctp-text animate-spin"
-                    />
-                    <p class="text-sm mr-auto">
-                        {((progress.loaded / progress.total) * 100).toPrecision(
-                            3,
-                        )}% ({prettyNumber(progress.loaded)}B / {prettyNumber(
-                            progress.total,
-                        )}B)
-                    </p>
-                {:else}
-                    <File class="ml-auto stroke-ctp-text" />
-                    <p class="text-sm mr-auto">
+    <!-- error or status information -->
+    {#if error}
+        <div class="mx-4 mb-2 px-3 py-1 rounded bg-ctp-crust" transition:slide>
+            <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-ctp-red to-ctp-mauve">
+                {error.title}
+            </h3>
+            <p>
+                {error.description}
+            </p>
+        </div>
+    {/if}
+
+    <!-- upload options -->
+    <div class="flex flex-col md:flex-row gap-8">
+        <div class="flex flex-col items-center">
+            <label
+                for="upload"
+                class="font-sans p-4 rounded border-2 border-dashed border-ctp-subtext0 bg-ctp-crust my-4 flex justify-center items-center flex-col gap-3 w-full md:w-80 h-56"
+            >
+                <!-- icon -->
+                <div class="flex flex-col">
+                    <div class="grow flex items-center justify-center">
+                        <div class="rounded-full bg-ctp-mantle px-2 py-2">
+                            {#if progress}
+                                <LoaderCircle
+                                    class="stroke-ctp-mauve animate-spin"
+                                />
+                            {:else if filename}
+                                <File class="stroke-ctp-mauve" />
+                            {:else}
+                                <Upload class="stroke-ctp-mauve" />
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- text -->
+                <div class="md:w-1/2 text-center break-words">
+                    {#if progress}
+                        uploading...
+                    {:else if filename}
                         {filename}
-                    </p>
+                    {:else}
+                        Drag and drop, or select a file to begin uploading.
+                    {/if}
+                </div>
+
+                <!-- size -->
+                <div>
+                    {#if progress}
+                        <div class="text-xs text-ctp-subtext0">
+                            {((progress.loaded / progress.total) * 100).toPrecision(
+                                3,
+                            )}% ({prettyNumber(progress.loaded)}B /
+                            {prettyNumber(progress.total)}B)
+                        </div>
+                    {:else if filename}
+                        <div class="text-xs text-ctp-subtext0">
+                            {prettyNumber(files?.item(0)?.size ?? 0)}B
+                        </div>
+                    {:else if env.PUBLIC_MAX_SIZE}
+                        <div class="text-xs text-ctp-subtext0">
+                            Max: {prettyNumber(parseInt(env.PUBLIC_MAX_SIZE))}B
+                        </div>
+                    {/if}
+                </div>
+
+                {#if progress}
+                    <Progress
+                        progress={progress.loaded / progress.total}
+                        classList="w-full"
+                    />
+                {/if}
+                <input id="upload" type="file" bind:files class="hidden" />
+            </label>
+
+            <!-- buttons -->
+            <div class="flex gap-2">
+                {#snippet uploadIcon()}
+                    <Upload />
+                {/snippet}
+                <Button
+                    classes={"bg-linear-to-tr from-ctp-green to-ctp-yellow border-ctp-green"}
+                    icon={uploadIcon}
+                    callback={upload}
+                    disabled={!canUpload}
+                >
+                    upload!
+                </Button>
+
+                {#snippet clearIcon()}
+                    <X />
+                {/snippet}
+                <Button
+                    classes={"bg-linear-to-tr from-ctp-red to-ctp-peach border-ctp-red"}
+                    icon={clearIcon}
+                    callback={clear}
+                    disabled={!canClear}
+                >
+                    clear
+                </Button>
+            </div>
+        </div>
+
+        <!-- options -->
+        <div>
+            <h2 class="text-2xl font-display">options</h2>
+
+            <div class="flex flex-col gap-2">
+                <TextInput bind:value={title} placeholder="title" />
+                <TextInput bind:value={description} placeholder="description" multiline />
+                <Checkbox bind:checked={preserveFilename} label="preserve filename?"/>
+                <MultiChoice options={[{
+                    label: "∞", value: "-1"
+                }, {
+                    label: "30d", value: "2592000",
+                }, {
+                    label: "1d", value: "86400",
+                }, {
+                    label: "12h", value: "43200",
+                }, {
+                    label: "1h", value: "3600",
+                }]} bind:value={expiry} />
+                {#if captchaEnabled}
+                    <CapWidget bind:token={capToken} bind:solve={solveCap} />
                 {/if}
             </div>
-            {#if progress}
-                <Progress
-                    progress={progress.loaded / progress.total}
-                    classList="w-full"
-                />
-            {/if}
-            <input id="upload" type="file" bind:files class="hidden" />
-        </label>
-
-        {#if env.PUBLIC_MAX_SIZE}
-            <div class="text-xs text-ctp-subtext0 -mt-4 mb-4">
-                max: {prettyNumber(parseInt(env.PUBLIC_MAX_SIZE))}B
-            </div>
-        {/if}
-
-        <!-- upload buttons -->
-        <div class="flex gap-2 mx-auto justify-center items-center">
-            <button
-                class="button border-ctp-red bg-ctp-red"
-                onclick={upload}
-                bind:this={uploadButton}
-                disabled
-            >
-                <Upload /> upload
-            </button>
-            <button
-                class="button border-ctp-lavender bg-ctp-lavender"
-                onclick={clear}
-                bind:this={clearButton}
-                disabled
-            >
-                <X />
-            </button>
         </div>
     </div>
 
     <!-- recent uploads -->
-    {#if recentUploads.length > 0}
-        <div transition:fade={{ duration: 200 }}>
-            <h2 class="text-ctp-subtext0 italic text-sm mb-4 mt-8">
-                recent uploads
-            </h2>
-            <div class="flex gap-2 flex-wrap">
-                {#each recentUploads as upload}
-                    <a
-                        href={`/v/${upload}`}
-                        class="flex items-center gap-2 rounded border-2 border-ctp-mantle px-3 py-1 text-sm"
-                        transition:slide={{ duration: 200 }}
-                    >
-                        <File class="stroke-ctp-subtext0" />
-                        {upload}
-                    </a>
-                {/each}
-            </div>
-        </div>
-    {/if}
+    <RecentUploads bind:uploads={recentUploads} />
 </div>
 
 <svelte:window ondragover={dragOver} ondrop={drop} />

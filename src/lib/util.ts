@@ -50,23 +50,42 @@ export async function createUpload(
   size: number,
   filename: string,
   key?: string,
+  options?: {
+    title?: string;
+    description?: string;
+    expiry?: number; // seconds, or -1 for never
+    preserveFilename?: boolean;
+    capToken?: string;
+  },
 ) {
   const body = {
     size,
     filename,
     key,
+    title: options?.title,
+    description: options?.description,
+    expiry: options?.expiry,
+    preserveFilename: options?.preserveFilename,
+    capToken: options?.capToken,
   };
   const res = await fetch("/api/upload/create", {
     method: "POST",
     body: JSON.stringify(body),
     headers: {
-      "Content-Type": "applicaiton/json",
+      "Content-Type": "application/json",
     },
   });
 
   if (res.status != 200) {
     console.error(res);
-    throw new Error(`${res.status} ${res.statusText}`);
+    let message = `${res.status} ${res.statusText}`;
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+    } catch {
+      // ignore non-JSON error bodies
+    }
+    throw new Error(message);
   }
 
   const json = await res.json();

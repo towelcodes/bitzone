@@ -87,6 +87,21 @@ export async function check(key: string) {
   }
 }
 
+export async function remove(key: string) {
+  const url = new URL(`https://${S3_BUCKET}.${S3_ENDPOINT}/${key}`);
+  const res = await client.fetch(url, {
+    method: "DELETE",
+  });
+  if (res.status != 204 && res.status != 200) {
+    console.error(`Unexpected response while deleting ${key}:`, {
+      statusText: res.statusText,
+      status: res.status,
+      text: await res.text(),
+    });
+  }
+  return res;
+}
+
 const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 export function createId(len = 5) {
   let out = "";

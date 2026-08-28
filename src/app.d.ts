@@ -5,6 +5,7 @@ declare global {
       env: {
         bucket: R2Bucket;
         ASSETS: Fetcher;
+        db: D1Database;
       };
     }
   }
