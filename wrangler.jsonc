@@ -35,9 +35,20 @@
 			"invocation_logs": true,
 			"persist": true,
 		},
+		"redact_query_string": false,
 	},
 	"vars": {
 		"PUBLIC_MAX_SIZE": "1000000000",
-		"PUBLIC_BASE_URL": "https://files.towel.codes"
+		"PUBLIC_BASE_URL": "https://files.towel.codes",
+		"PUBLIC_CAP_ENDPOINT": "https://cap.towel.codes/dfba977b53"
 	},
+	"routes": [
+		{
+			"pattern": "files.towel.codes",
+			"zone_name": "towel.codes",
+			"custom_domain": true
+		}
+	],
+	"preview_urls": true,
+	"workers_dev": true,
 }

@@ -45,7 +45,6 @@
     let expiry = $state("-1");
     let preserveFilename = $state(false);
     let capToken = $state("");
-    let solveCap: (() => Promise<string>) | undefined = $state();
 
     let canUpload = $state(false);
     let canClear = $state(false);
@@ -57,17 +56,12 @@
 
         // create the upload
         try {
-            // get a fresh captcha token (single-use) right before uploading
-            let token = capToken;
-            if (captchaEnabled && solveCap) {
-                token = await solveCap();
-            }
             const { key, signed } = await createUpload(file.size, file.name, undefined, {
                 title: title || undefined,
                 description: description || undefined,
                 expiry: parseInt(expiry),
                 preserveFilename,
-                capToken: token || undefined,
+                capToken: capToken || undefined,
             });
             const req = new XMLHttpRequest();
             req.open("PUT", signed);
@@ -313,7 +307,7 @@
                     label: "1h", value: "3600",
                 }]} bind:value={expiry} />
                 {#if captchaEnabled}
-                    <CapWidget bind:token={capToken} bind:solve={solveCap} />
+                    <CapWidget bind:token={capToken} />
                 {/if}
             </div>
         </div>
