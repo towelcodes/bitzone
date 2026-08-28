@@ -18,6 +18,7 @@ interface UploadRequest {
   description?: string;
   expiry?: number; // seconds, or -1 for never
   preserveFilename?: boolean;
+  capToken?: string;
 }
 
 export const POST: RequestHandler = async ({
@@ -43,6 +44,39 @@ export const POST: RequestHandler = async ({
     if (uploadRequest.size > parseInt(env.PUBLIC_MAX_SIZE)) {
       error(413, {
         message: "content is larger than this instance supports",
+      });
+    }
+  }
+
+  // verify the cap captcha token when the captcha is enabled
+  const capSecret = privateEnv.CAP_SECRET_KEY;
+  const capEndpoint = env.PUBLIC_CAP_ENDPOINT;
+  if (capSecret && capEndpoint) {
+    if (!uploadRequest.capToken) {
+      error(400, {
+        message: "missing captcha token",
+      });
+    }
+
+    const verifyUrl = `${capEndpoint.replace(/\/?$/, "/")}siteverify`;
+    const verifyRes = await fetch(verifyUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        secret: capSecret,
+        response: uploadRequest.capToken,
+      }),
+    });
+
+    const verify = (await verifyRes.json()) as {
+      success?: boolean;
+      error?: string;
+    };
+    if (!verify.success) {
+      error(403, {
+        message: `captcha verification failed: ${verify.error ?? "unknown"}`,
       });
     }
   }

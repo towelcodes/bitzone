@@ -23,10 +23,13 @@
     import MultiChoice from "$lib/form/MultiChoice.svelte";
     import Button from "$lib/Button.svelte";
     import Checkbox from "$lib/form/Checkbox.svelte";
+    import CapWidget from "$lib/form/CapWidget.svelte";
 
     let { data }: PageProps = $props();
 
     const rules = PUBLIC_INSTANCE_RULES.split("\\n");
+    const captchaEnabled =
+        env.PUBLIC_CAP_ENDPOINT !== undefined && env.PUBLIC_CAP_ENDPOINT !== "";
 
     let filename = $state("");
     let files: FileList | undefined = $state();
@@ -41,6 +44,8 @@
     let description = $state("");
     let expiry = $state("-1");
     let preserveFilename = $state(false);
+    let capToken = $state("");
+    let solveCap: (() => Promise<string>) | undefined = $state();
 
     let canUpload = $state(false);
     let canClear = $state(false);
@@ -52,11 +57,17 @@
 
         // create the upload
         try {
+            // get a fresh captcha token (single-use) right before uploading
+            let token = capToken;
+            if (captchaEnabled && solveCap) {
+                token = await solveCap();
+            }
             const { key, signed } = await createUpload(file.size, file.name, undefined, {
                 title: title || undefined,
                 description: description || undefined,
                 expiry: parseInt(expiry),
                 preserveFilename,
+                capToken: token || undefined,
             });
             const req = new XMLHttpRequest();
             req.open("PUT", signed);
@@ -89,7 +100,7 @@
             console.error(e);
             error = {
                 title: "upload failed",
-                description: `${e.message} (check console)`,
+                description: `${e.message}`,
             };
             return;
         }
@@ -117,7 +128,7 @@
                     description: `size is too big (${prettyNumber(file.size)}B > ${prettyNumber(parseInt(maxSize))}B)`,
                 };
             } else {
-                canUpload = true;
+                canUpload = !captchaEnabled || capToken !== "";
                 canClear = true;
                 if (error?.title === "cannot upload this file") {
                     error = undefined;
@@ -301,6 +312,9 @@
                 }, {
                     label: "1h", value: "3600",
                 }]} bind:value={expiry} />
+                {#if captchaEnabled}
+                    <CapWidget bind:token={capToken} bind:solve={solveCap} />
+                {/if}
             </div>
         </div>
     </div>
